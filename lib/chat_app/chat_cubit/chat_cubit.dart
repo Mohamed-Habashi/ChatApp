@@ -1,11 +1,9 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../constants.dart';
 import '../models/chat_user_model.dart';
 import '../models/message_model.dart';
 import 'chat_states.dart';
@@ -49,12 +47,14 @@ class ChatCubit extends Cubit<ChatStates> {
     required String receiverId,
     required String dateTime,
     required String text,
+    String ? image,
   }) {
     MessageModel messageModel = MessageModel(
       senderId: chatUserModel!.uId,
       receiverId: receiverId,
       dateTime: dateTime,
       text: text,
+      image: image?? '',
     );
     FirebaseFirestore.instance
         .collection('users')
@@ -105,34 +105,39 @@ class ChatCubit extends Cubit<ChatStates> {
     });
   }
 
-  File? image;
+  File? postImage;
   var picker = ImagePicker();
+  Future<void> getPostImage({
+  required String receiverId,
+    required String dateTime
+}) async {
+    final pickedFile = await picker.getImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      postImage = File(pickedFile.path);
 
-  getImage() {
-    picker.pickImage(source: ImageSource.gallery).then((value) {
-      if (value != null) {
-        image = File(value.path);
-        emit(ChatImageGetSuccessfullyState());
-      } else {
-        print('no image selected');
-      }
-      uploadImage();
       emit(ChatImageGetSuccessfullyState());
-    }).catchError((error) {
-      print(error.toString());
+      uploadImage(
+        receiverId: receiverId,
+        dateTime: dateTime,
+      );
+    } else {
       emit(ChatImageGetErrorState());
-    });
+    }
   }
 
 
 
-  void uploadImage() {
+  void uploadImage({
+  required String receiverId,
+    required String dateTime,
+}) {
+    emit(UploadImageLoadingState());
     firebase_storage.FirebaseStorage.instance
         .ref()
-        .child('images/${Uri.file(image!.path).pathSegments.last}')
-        .putFile(image!).then((value){
+        .child('images/${Uri.file(postImage!.path).pathSegments.last}')
+        .putFile(postImage!).then((value){
           value.ref.getDownloadURL().then((value) {
-            print(value);
+            sendMessage(receiverId: receiverId, dateTime: dateTime, text: '',image: value);
           });
     });
   }

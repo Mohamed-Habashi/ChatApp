@@ -25,3 +25,5 @@ class ChatImageGetErrorState extends ChatStates{}
 class UploadImageSuccessState extends ChatStates{}
 
 class UploadImageErrorState extends ChatStates{}
+
+class UploadImageLoadingState extends ChatStates{}
