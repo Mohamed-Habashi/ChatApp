@@ -110,7 +110,8 @@ Widget buildMessage(MessageModel messageModel,context,) {
   ):BubbleNormalImage(
     id: 'id001',
     image: Image(image: NetworkImage('${messageModel.image}')),
-    color: Colors.purpleAccent,
+    color: messageModel.senderId == chatUserModel!.uId ? Colors.red : Colors.grey,
+    isSender: messageModel.senderId == chatUserModel!.uId ? true : false,
     tail: true,
     delivered: true,
   );
